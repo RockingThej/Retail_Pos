@@ -12,6 +12,7 @@ DEFAULT_PRICES = {"pen": 10, "notebook": 45, "bag": 799, "bottle": 150}
 # Accepts only codes such as "total * 0.9" or "total - 50".
 PROMO_PATTERN = re.compile(r"^total\s*([*-])\s*(\d+(?:\.\d+)?)$")
 
+
 class PosSystem:
     """Tracks prices, stock, sales totals and receipts for a small shop."""
 
@@ -75,6 +76,7 @@ class PosSystem:
         """Print the running sales total."""
         print(f"Sales so far: {self.sales_total:.2f}")
 
+
 def main():
     """Run a demo checkout session."""
     pos = PosSystem()
@@ -94,6 +96,7 @@ def main():
         print("Invalid promo code:", error)
     pos.save_receipt_log()
     pos.print_sales()
+
 
 if __name__ == "__main__":
     main()
