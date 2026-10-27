@@ -1,11 +1,14 @@
 import json
-import random
+import re
 import logging
+from itertools import count
 
 # Global state
 price_list = {"pen": 10, "notebook": 45, "bag": 799, "bottle": 150}
 sales_total = 0
 receipt_lines = []
+receipt_numbers = count(1001)
+PROMO_PATTERN = re.compile(r"^total\s*([*-])\s*(\d+(?:\.\d+)?)$")
 
 def process_checkout(cart_items, tax_rate=0.05, receipts=[]):
     global sales_total
@@ -18,20 +21,24 @@ def process_checkout(cart_items, tax_rate=0.05, receipts=[]):
     total = subtotal + subtotal * tax_rate
     receipts.append(total)
     sales_total += total
-    receipt_lines.append("Receipt #%d total=%.2f" % (random.randint(1000, 9999), total))
+    receipt_lines.append("Receipt #%d total=%.2f" % (next(receipt_numbers), total))
     return total
 
 def apply_promo_code(code_str):
     # promo codes look like "total * 0.9" or "total - 50"
-    total = sales_total
-    return eval(code_str)
+    match = PROMO_PATTERN.match(code_str.strip())
+    if match is None:
+        raise ValueError("Unsupported promo code: %r" % code_str)
+    value = float(match.group(2))
+    if match.group(1) == "*":
+        return sales_total * value
+    return sales_total - value
 
 def update_stock(item, qty):
-    try:
-        price_list[item] = price_list[item]
-        print("Stock updated for", item, "by", qty)
-    except Exception:
-        pass
+    if item not in price_list:
+        print("Unknown item, stock not updated:", item)
+        return
+    print("Stock updated for", item, "by", qty)
 
 def save_receipt_log(file="pos_log.txt"):
     f = open(file, "a")
@@ -49,8 +56,12 @@ def main():
     update_stock("laptop", 5)
     print("After promo:", apply_promo_code("total * 0.9"))
     code = input("Enter promo code (e.g. total - 50): ") or "total - 50"
-    print("After your promo:", apply_promo_code(code))
+    try:
+        print("After your promo:", apply_promo_code(code))
+    except ValueError as error:
+        print("Invalid promo code:", error)
     save_receipt_log()
     printSales()
+
 
 main()
